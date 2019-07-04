@@ -7,6 +7,7 @@ class GooglescholarSpider(scrapy.Spider):
     LABLE = 'machine_learning'
     MAX_AUTHORS = 100
     MAX_PAPERS = 100
+    BY_YEAR = True
     
     name = 'googlescholar'
     allowed_domains = ['scholar.google.com']
@@ -31,7 +32,10 @@ class GooglescholarSpider(scrapy.Spider):
         next_url = response.url + '&after_author={}&astart={}'.format(after_author, start)
 
         for url in urls:
-            yield scrapy.Request(GooglescholarSpider.base_url + url + '&cstart=0&pagesize={}'.format(GooglescholarSpider.MAX_PAPERS) , callback=self.parse_author)
+            url = GooglescholarSpider.base_url + url + '&cstart=0&pagesize={}'.format(GooglescholarSpider.MAX_PAPERS) 
+            if GooglescholarSpider.BY_YEAR:
+                url += '&view_op=list_works&sortby=pubdate'
+            yield scrapy.Request(url , callback=self.parse_author)
 
         yield scrapy.Request(next_url, callback=self.parse)
 
@@ -39,12 +43,14 @@ class GooglescholarSpider(scrapy.Spider):
         author = response.css("div#gsc_prf_in::text").extract_first()
         titles = response.css("a.gsc_a_at::text").extract()
         citations = [int(x) if x else 0 for x in response.css("a.gsc_a_ac::text").extract()]
+        years = response.css("span.gsc_a_hc::text").extract()
 
-        papers = sorted(zip(titles, citations), key=lambda x: x[1], reverse=True)
+        papers = sorted(list(zip(titles, citations, years)), key=lambda x: x[1], reverse=True)
 
         for paper in papers:
             yield {
                 'title': paper[0],
                 'author': author,
+                'year': paper[2],
                 'citation': paper[1]
             }
