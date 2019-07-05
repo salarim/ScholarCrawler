@@ -5,9 +5,9 @@ import re
 
 class GooglescholarSpider(scrapy.Spider):
     LABLE = 'machine_learning'
-    MAX_AUTHORS = 100
+    MAX_AUTHORS = 10000
     MAX_PAPERS = 100
-    BY_YEAR = True
+    BY_YEAR = False
     
     name = 'googlescholar'
     allowed_domains = ['scholar.google.com']
@@ -29,7 +29,7 @@ class GooglescholarSpider(scrapy.Spider):
         next_onclick = response.css("button.gs_btnPR::attr(onclick)").extract()[0]
         after_author = re.search('after_author\\\\x3d(.+)\\\\x26', next_onclick).group(1)
         start = re.search('start\\\\x3d(\d+)', next_onclick).group(1) 
-        next_url = response.url + '&after_author={}&astart={}'.format(after_author, start)
+        next_url = GooglescholarSpider.start_urls[0] + '&after_author={}&astart={}'.format(after_author, start)
 
         for url in urls:
             url = GooglescholarSpider.base_url + url + '&cstart=0&pagesize={}'.format(GooglescholarSpider.MAX_PAPERS) 
