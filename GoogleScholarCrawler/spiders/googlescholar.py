@@ -5,9 +5,9 @@ import re
 
 class GooglescholarSpider(scrapy.Spider):
     LABLE = 'machine_learning'
-    MAX_AUTHORS = 10000
+    MAX_AUTHORS = 1000
     MAX_PAPERS = 100
-    BY_YEAR = False
+    BY_YEAR = True
     
     name = 'googlescholar'
     allowed_domains = ['scholar.google.com']
@@ -41,9 +41,10 @@ class GooglescholarSpider(scrapy.Spider):
 
     def parse_author(self, response):
         author = response.css("div#gsc_prf_in::text").extract_first()
-        titles = response.css("a.gsc_a_at::text").extract()
-        citations = [int(x) if x else 0 for x in response.css("a.gsc_a_ac::text").extract()]
-        years = response.css("span.gsc_a_hc::text").extract()
+        titles = [tag.css('::text').extract_first(default='') for tag in response.css('a.gsc_a_at')]
+        citations = [tag.css('::text').extract_first(default='') for tag in response.css('a.gsc_a_ac')]
+        citations = [int(x) if x else 0 for x in citations] 
+        years = [tag.css('::text').extract_first(default='') for tag in response.css('span.gsc_a_hc')]
 
         papers = sorted(list(zip(titles, citations, years)), key=lambda x: x[1], reverse=True)
 
